@@ -4,21 +4,32 @@
 *.dll
 *.so
 *.dylib
-*.o
-*.a
 
 # Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool
+# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories
-vendor/
+# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
+.glide/
+
+# Go module downloads
+go.sum
+
+# Go workspace file
+go.work
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Build output
+bin/
+build/
 
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
@@ -28,24 +39,29 @@ vendor/
 Thumbs.db
 
 # Logs
-*.log
 logs/
-*.log.*
+*.log
 
-# Environment
+# Data
+data/
+
+# Backups
+backups/
+
+# Config
+config.yaml
+config.local.yaml
 .env
-.env.local
-.env.*.local
 
-# Build
-dist/
-bin/
-build/
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Coverage reports
+coverage.out
+coverage.html
 
 # Temporary files
-tmp/
-temp/
 *.tmp
-
-# Go workspace
-go.work
+*.temp
