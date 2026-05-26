@@ -1,4 +1,4 @@
-﻿package config
+package config
 
 import (
 	"fmt"
@@ -113,6 +113,16 @@ func (v *Validator) validateServer(cfg *ServerConfig) {
 	if cfg.IdleTimeout <= 0 {
 		v.AddError("server.idle_timeout", fmt.Sprintf("invalid idle_timeout: %d, using default 120", cfg.IdleTimeout))
 		cfg.IdleTimeout = 120
+	}
+
+	if cfg.MaxBodySize <= 0 {
+		v.AddError("server.max_body_size", fmt.Sprintf("invalid max_body_size: %d, using default 8388608", cfg.MaxBodySize))
+		cfg.MaxBodySize = 8 << 20
+	}
+
+	if cfg.MaxBodySize > 100<<20 {
+		v.AddError("server.max_body_size", fmt.Sprintf("max_body_size too large: %d, max 100MB, using default", cfg.MaxBodySize))
+		cfg.MaxBodySize = 100 << 20
 	}
 }
 

@@ -39,6 +39,8 @@ func New(cfg *config.Config) (*Server, error) {
 	engine.Use(middleware.Recovery())
 	engine.Use(middleware.CORS())
 	engine.Use(middleware.RateLimit())
+	middleware.InitBodyLimit(cfg.Server)
+	engine.Use(middleware.BodyLimit())
 
 	if cfg.Auth.Enabled {
 		if cfg.Auth.SignatureEnabled {

@@ -9,6 +9,7 @@ server:
   read_timeout: 30
   write_timeout: 30
   idle_timeout: 120
+  max_body_size: 8388608  # 8MB, 限制请求体大小以防止内存耗尽攻击
 
 logging:
   level: "info"

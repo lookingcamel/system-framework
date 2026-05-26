@@ -38,9 +38,10 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	ReadTimeout  int
-	WriteTimeout int
-	IdleTimeout  int
+	ReadTimeout    int
+	WriteTimeout   int
+	IdleTimeout    int
+	MaxBodySize    int64 `mapstructure:"max_body_size"`
 }
 
 type LoggingConfig struct {
