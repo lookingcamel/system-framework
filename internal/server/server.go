@@ -20,6 +20,7 @@ import (
 	"github.com/lookingcamel/system-framework/internal/handler"
 	"github.com/lookingcamel/system-framework/internal/logger"
 	"github.com/lookingcamel/system-framework/internal/middleware"
+	"github.com/lookingcamel/system-framework/internal/versioning"
 )
 
 type Server struct {
@@ -82,11 +83,20 @@ func New(cfg *config.Config) (*Server, error) {
 		engine.GET("/circuit/status", circuitbreaker.GetCircuitStatus())
 	}
 
+	versioning.InitAPIVersion(cfg.APIVersion)
+	engine.Use(versioning.APIVersion())
+
+	vr := versioning.NewVersionedRouter(engine)
 	exampleHandler := handler.NewExampleHandler()
-	v1 := engine.Group("/api/v1")
-	{
-		v1.GET("/example/:id", exampleHandler.GetExample)
-		v1.GET("/examples", exampleHandler.ListExample)
+
+	for _, version := range cfg.APIVersion.SupportedVersions {
+		vr.RegisterVersion(version)
+
+		switch version {
+		case "v1":
+			vr.RegisterRoute("v1", "GET", "/example/:id", exampleHandler.GetExample)
+			vr.RegisterRoute("v1", "GET", "/examples", exampleHandler.ListExample)
+		}
 	}
 
 	return &Server{

@@ -49,6 +49,7 @@ func (v *Validator) Validate(cfg *Config) error {
 	v.validateNacos(&cfg.Nacos)
 	v.validateCircuitBreaker(&cfg.CircuitBreaker)
 	v.validateAuth(&cfg.Auth)
+	v.validateAPIVersion(&cfg.APIVersion)
 
 	if len(v.errors) > 0 {
 		return v
@@ -457,4 +458,43 @@ func ValidateURL(url string) error {
 		return fmt.Errorf("invalid URL format: %s", url)
 	}
 	return nil
+}
+
+func (v *Validator) validateAPIVersion(cfg *APIVersionConfig) {
+	if !cfg.Enabled {
+		return
+	}
+
+	if cfg.DefaultVersion == "" {
+		v.AddError("api_version.default_version", "default_version is required when API versioning is enabled")
+		cfg.DefaultVersion = "v1"
+	}
+
+	validVersionFormat := regexp.MustCompile(`^v\d+$`)
+	if !validVersionFormat.MatchString(cfg.DefaultVersion) {
+		v.AddError("api_version.default_version", fmt.Sprintf("invalid default_version format: %s, should be like 'v1', 'v2'", cfg.DefaultVersion))
+		cfg.DefaultVersion = "v1"
+	}
+
+	if len(cfg.SupportedVersions) == 0 {
+		cfg.SupportedVersions = []string{"v1"}
+	}
+
+	for _, version := range cfg.SupportedVersions {
+		if !validVersionFormat.MatchString(version) {
+			v.AddError("api_version.supported_versions", fmt.Sprintf("invalid version format: %s, should be like 'v1', 'v2'", version))
+		}
+	}
+
+	defaultFound := false
+	for _, version := range cfg.SupportedVersions {
+		if version == cfg.DefaultVersion {
+			defaultFound = true
+			break
+		}
+	}
+	if !defaultFound {
+		v.AddError("api_version.default_version", fmt.Sprintf("default_version '%s' not in supported_versions, adding it", cfg.DefaultVersion))
+		cfg.SupportedVersions = append(cfg.SupportedVersions, cfg.DefaultVersion)
+	}
 }

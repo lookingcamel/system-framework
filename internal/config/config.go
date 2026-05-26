@@ -27,6 +27,14 @@ type Config struct {
 	CircuitBreaker     CircuitBreakerConfig
 	Auth               AuthConfig
 	RateLimit          RateLimitConfig
+	APIVersion         APIVersionConfig
+}
+
+type APIVersionConfig struct {
+	Enabled       bool
+	DefaultVersion string      `mapstructure:"default_version"`
+	SupportedVersions []string  `mapstructure:"supported_versions"`
+	DeprecationNotice string  `mapstructure:"deprecation_notice"`
 }
 
 type AppConfig struct {
