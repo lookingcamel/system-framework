@@ -1,0 +1,16 @@
+.dockerignore
+.git
+.gitignore
+*.md
+logs/
+*.log
+.env
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+bin/
+dist/
+node_modules/
+vendor/

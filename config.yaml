@@ -1,0 +1,106 @@
+﻿app:
+  name: "system-framework"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 8080
+  mode: "release"
+
+server:
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 120
+
+logging:
+  level: "info"
+  format: "json"
+  output: "console"
+  output_path: "logs/app.log"
+  max_size: 100
+  max_backups: 7
+  max_age: 30
+  compress: true
+
+prometheus:
+  enabled: true
+  path: "/metrics"
+
+pprof:
+  enabled: true
+  path: "/debug/pprof"
+
+tracing:
+  enabled: true
+  service_name: "system-framework"
+  exporter: "jaeger"
+  endpoint: "http://jaeger:14268/api/traces"
+  sample_rate: 1.0
+
+health:
+  enabled: true
+  path: "/health"
+
+graceful_shutdown:
+  timeout: 30
+
+database:
+  type: "sqlite"
+  host: "localhost"
+  port: 3306
+  name: "app"
+  username: "admin"
+  password: "password"
+  sqlite_path: "./data/example_db.sqlite"
+  max_open_connections: 10
+  max_idle_connections: 5
+  connection_max_lifetime: 300
+  migration_path: "./migrations"
+  backup_enabled: true
+  backup_dir: "./backups"
+
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 10
+  min_idle_conns: 5
+
+nacos:
+  enabled: false
+  server_addr: "localhost"
+  server_port: 8848
+  namespace_id: ""
+  group: "DEFAULT_GROUP"
+  data_id: "system-framework.yaml"
+  username: "nacos"
+  password: "nacos"
+  config_type: "yaml"
+  refresh_enable: true
+  refresh_delay: 30
+
+circuit_breaker:
+  enabled: true
+  default_timeout: 3000
+  default_max_concurrent: 100
+  default_error_percentage: 50
+  default_request_volume: 20
+
+auth:
+  enabled: false
+  jwt_enabled: true
+  jwt_secret: "your-256-bit-secret-key-here-change-in-production"
+  jwt_issuer: "system-framework"
+  jwt_audience: "system-framework-api"
+  jwt_expire_seconds: 86400
+  signature_enabled: false
+  signature_secret: "your-signature-secret-key-here-change-in-production"
+  signature_header: "X-Signature"
+  timestamp_header: "X-Timestamp"
+  nonce_header: "X-Nonce"
+  timestamp_max_diff: 300
+  exclude_paths:
+    - "/health"
+    - "/ready"
+    - "/metrics"
+    - "/debug/pprof"

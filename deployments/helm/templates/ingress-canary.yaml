@@ -1,0 +1,49 @@
+﻿{{- if .Values.traffic.canary.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "system-framework.fullname" . }}-canary
+  labels:
+    {{- include "system-framework.labels" . | nindent 4 }}
+    app.kubernetes.io/canary: "true"
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    {{- if .Values.traffic.canary.weight }}
+    nginx.ingress.kubernetes.io/canary-weight: "{{ .Values.traffic.canary.weight }}"
+    {{- end }}
+    {{- if .Values.traffic.canary.header }}
+    nginx.ingress.kubernetes.io/canary-by-header: "{{ .Values.traffic.canary.header }}"
+    {{- end }}
+    {{- if .Values.traffic.canary.headerValue }}
+    nginx.ingress.kubernetes.io/canary-by-header-value: "{{ .Values.traffic.canary.headerValue }}"
+    {{- end }}
+    {{- if .Values.traffic.canary.cookie }}
+    nginx.ingress.kubernetes.io/canary-by-cookie: "{{ .Values.traffic.canary.cookie }}"
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "system-framework.fullname" $ }}-canary
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

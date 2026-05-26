@@ -1,0 +1,67 @@
+﻿{{- if and .Values.configmap.enabled .Values.config -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "system-framework.fullname" . }}-config
+  labels:
+    {{- include "system-framework.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    app:
+      name: {{ .Values.config.app.name | quote }}
+      version: {{ .Values.config.app.version | quote }}
+      host: {{ .Values.config.app.host | quote }}
+      port: {{ .Values.config.app.port }}
+      mode: {{ .Values.config.app.mode | quote }}
+    logging:
+      level: {{ .Values.config.logging.level | quote }}
+      format: {{ .Values.config.logging.format | quote }}
+      output: {{ .Values.config.logging.output | quote }}
+      outputPath: {{ .Values.config.logging.outputPath | quote }}
+    prometheus:
+      enabled: {{ .Values.config.prometheus.enabled }}
+      path: {{ .Values.config.prometheus.path | quote }}
+    pprof:
+      enabled: {{ .Values.config.pprof.enabled }}
+      path: {{ .Values.config.pprof.path | quote }}
+    tracing:
+      enabled: {{ .Values.config.tracing.enabled }}
+      serviceName: {{ .Values.config.tracing.serviceName | quote }}
+      exporter: {{ .Values.config.tracing.exporter | quote }}
+      endpoint: {{ .Values.config.tracing.endpoint | quote }}
+      sampleRate: {{ .Values.config.tracing.sampleRate }}
+    health:
+      enabled: {{ .Values.config.health.enabled }}
+      path: {{ .Values.config.health.path | quote }}
+    database:
+      type: {{ .Values.config.database.type | quote }}
+      host: {{ .Values.config.database.host | quote }}
+      port: {{ .Values.config.database.port }}
+      name: {{ .Values.config.database.name | quote }}
+      username: {{ .Values.config.database.username | quote }}
+      password: {{ .Values.config.database.password | quote }}
+      sqlitePath: {{ .Values.config.database.sqlitePath | quote }}
+      maxOpenConnections: {{ .Values.config.database.maxOpenConnections }}
+      maxIdleConnections: {{ .Values.config.database.maxIdleConnections }}
+      connectionMaxLifetime: {{ .Values.config.database.connectionMaxLifetime }}
+    redis:
+      enabled: {{ .Values.config.redis.enabled }}
+      host: {{ .Values.config.redis.host | quote }}
+      port: {{ .Values.config.redis.port }}
+      password: {{ .Values.config.redis.password | quote }}
+      db: {{ .Values.config.redis.db }}
+      poolSize: {{ .Values.config.redis.poolSize }}
+      minIdleConns: {{ .Values.config.redis.minIdleConns }}
+    nacos:
+      enabled: {{ .Values.config.nacos.enabled }}
+      serverAddr: {{ .Values.config.nacos.serverAddr | quote }}
+      serverPort: {{ .Values.config.nacos.serverPort }}
+      namespaceId: {{ .Values.config.nacos.namespaceId | quote }}
+      group: {{ .Values.config.nacos.group | quote }}
+      dataId: {{ .Values.config.nacos.dataId | quote }}
+      username: {{ .Values.config.nacos.username | quote }}
+      password: {{ .Values.config.nacos.password | quote }}
+      configType: {{ .Values.config.nacos.configType | quote }}
+      refreshEnable: {{ .Values.config.nacos.refreshEnable }}
+      refreshDelay: {{ .Values.config.nacos.refreshDelay }}
+{{- end }}

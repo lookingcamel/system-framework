@@ -1,0 +1,23 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "system-framework.fullname" . }}
+  labels:
+    {{- include "system-framework.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.traffic.sessionAffinity.enabled }}
+  sessionAffinity: {{ .Values.traffic.sessionAffinity.type }}
+  sessionAffinityConfig:
+    {{- if eq .Values.traffic.sessionAffinity.type "ClientIP" }}
+    clientIP:
+      timeoutSeconds: {{ .Values.traffic.sessionAffinity.sessionTimeoutSeconds }}
+    {{- end }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "system-framework.selectorLabels" . | nindent 4 }}

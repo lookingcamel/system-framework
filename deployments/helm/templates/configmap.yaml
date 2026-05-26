@@ -1,0 +1,10 @@
+﻿{{- if .Values.configmap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "system-framework.fullname" . }}
+  labels:
+    {{- include "system-framework.labels" . | nindent 4 }}
+data:
+{{ .Values.configmap.config | toYaml | indent 2 }}
+{{- end -}}

@@ -1,0 +1,194 @@
+﻿replicaCount: 1
+
+image:
+  repository: lookingcamel/system-framework
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+configmap:
+  enabled: false
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and instead to pre-configure
+  # this for a given Pod by the Cluster Operator.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 0%
+
+terminationGracePeriodSeconds: 30
+
+config:
+  app:
+    name: "system-framework"
+    version: "1.0.0"
+    host: "0.0.0.0"
+    port: 8080
+    mode: "release"
+  logging:
+    level: "info"
+    format: "json"
+    output: "console"
+    outputPath: "logs/app.log"
+  prometheus:
+    enabled: true
+    path: "/metrics"
+  pprof:
+    enabled: true
+    path: "/debug/pprof"
+  tracing:
+    enabled: true
+    serviceName: "system-framework"
+    exporter: "jaeger"
+    endpoint: "http://jaeger-collector:14268/api/traces"
+    sampleRate: 1.0
+  health:
+    enabled: true
+    path: "/health"
+  database:
+    type: "sqlite"
+    host: "localhost"
+    port: 3306
+    name: "app"
+    username: "admin"
+    password: "password"
+    sqlitePath: "./data/example_db.sqlite"
+    maxOpenConnections: 10
+    maxIdleConnections: 5
+    connectionMaxLifetime: 300
+  redis:
+    enabled: true
+    host: "redis"
+    port: 6379
+    password: ""
+    db: 0
+    poolSize: 10
+    minIdleConns: 5
+  nacos:
+    enabled: false
+    serverAddr: "nacos"
+    serverPort: 8848
+    namespaceId: ""
+    group: "DEFAULT_GROUP"
+    dataId: "system-framework.yaml"
+    username: "nacos"
+    password: "nacos"
+    configType: "yaml"
+    refreshEnable: true
+    refreshDelay: 30
+  circuitBreaker:
+    enabled: true
+    defaultTimeout: 3000
+    defaultMaxConcurrent: 100
+    defaultErrorPercentage: 50
+    defaultRequestVolume: 20
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+traffic:
+  canary:
+    enabled: false
+    weight: 10
+    header: ""
+    headerValue: ""
+    cookie: ""
+  mirror:
+    enabled: false
+    destination: ""
+    weight: 100
+  sessionAffinity:
+    enabled: false
+    type: ClientIP
+    sessionTimeoutSeconds: 10800
+  rateLimit:
+    enabled: false
+    requestsPerSecond: 1000
+    burst: 2000
