@@ -1,4 +1,4 @@
-﻿package server
+package server
 
 import (
 	"context"
@@ -38,6 +38,7 @@ func New(cfg *config.Config) (*Server, error) {
 	engine.Use(middleware.RequestID())
 	engine.Use(middleware.Recovery())
 	engine.Use(middleware.CORS())
+	engine.Use(middleware.RateLimit())
 
 	if cfg.Auth.Enabled {
 		if cfg.Auth.SignatureEnabled {
@@ -56,11 +57,17 @@ func New(cfg *config.Config) (*Server, error) {
 		engine.GET(cfg.Prometheus.Path, gin.WrapH(promhttp.Handler()))
 	}
 
-	if cfg.PProf.Enabled {
+	if cfg.PProf.Enabled && cfg.App.Mode != "release" {
 		pprofPath := cfg.PProf.Path
 		engine.Any(pprofPath+"/*any", gin.WrapH(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.DefaultServeMux.ServeHTTP(w, r)
 		})))
+		logger.Log.Info("PProf enabled (development mode only)",
+			zap.String("path", pprofPath),
+			zap.String("mode", cfg.App.Mode),
+		)
+	} else if cfg.App.Mode == "release" {
+		logger.Log.Info("PProf disabled in production mode")
 	}
 
 	if cfg.Health.Enabled {

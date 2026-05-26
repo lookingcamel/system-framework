@@ -1,4 +1,4 @@
-﻿# HTTP 服务器模块
+# HTTP 服务器模块
 
 基于 Gin 框架的 HTTP 服务器封装，提供优雅启动和关闭。
 
@@ -9,9 +9,10 @@
 - 🏥 **健康检查**: 存活和就绪探针
 - 🌐 **中间件支持**: 完整的中间件链
 - 🔧 **配置灵活**: 支持多种配置选项
-- 📊 **性能监控**: 内置 pprof 支持
+- 📊 **性能监控**: 内置 pprof 支持（生产环境自动禁用）
 - 🔐 **安全特性**: CORS、Security Headers
 - 🔄 **热重载**: 支持配置热更新
+- 🚫 **生产安全**: 生产模式自动禁用敏感端点
 
 ## 快速开始
 
@@ -108,12 +109,25 @@ GET /metrics     # Prometheus 指标
 
 ### 性能分析
 
+> ⚠️ **安全提示**: pprof 端点仅在非生产环境（debug/test 模式）下可用。生产环境（release 模式）会自动禁用 pprof 以防止敏感信息泄露。
+
 ```
-GET /debug/pprof/           # pprof 首页
-GET /debug/pprof/profile    # CPU 性能分析
-GET /debug/pprof/heap       # 内存分析
-GET /debug/pprof/goroutine  # Goroutine 分析
-GET /debug/pprof/threadcreate # 线程分析
+GET /debug/pprof/           # pprof 首页（仅开发/测试模式）
+GET /debug/pprof/profile    # CPU 性能分析（仅开发/测试模式）
+GET /debug/pprof/heap       # 内存分析（仅开发/测试模式）
+GET /debug/pprof/goroutine  # Goroutine 分析（仅开发/测试模式）
+GET /debug/pprof/threadcreate # 线程分析（仅开发/测试模式）
+```
+
+### 配置说明
+
+```yaml
+app:
+  mode: "release"  # release 模式自动禁用 pprof
+
+pprof:
+  enabled: true  # 即使设置为 true，在 release 模式下也会被禁用
+  path: "/debug/pprof"
 ```
 
 ### 熔断器状态

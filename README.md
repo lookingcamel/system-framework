@@ -1,4 +1,4 @@
-﻿# System Framework
+# System Framework
 
 基于 Go + Gin 的现代化云原生微服务框架。
 
@@ -28,6 +28,7 @@
 - 📈 **Prometheus 监控**: 完整的指标采集和监控体系
 - 🔍 **分布式追踪**: OpenTelemetry + OTLP 支持
 - 🛡️ **熔断降级**: 基于 Hystrix-go 的熔断器保护
+- 🚦 **速率限制**: 基于令牌桶的请求限流，防止暴力破解
 - 🔐 **安全认证**: JWT + 请求签名验证
 - 🗄️ **数据库迁移**: golang-migrate 支持版本化迁移
 - 💾 **自动备份**: 数据库定时备份和恢复

@@ -1,4 +1,4 @@
-﻿# 中间件模块
+# 中间件模块
 
 提供 Gin 框架的中间件集合，包括日志、认证、追踪、限流等。
 
@@ -7,7 +7,7 @@
 - 📝 **请求日志**: 结构化请求日志记录
 - 🔍 **链路追踪**: 自动创建追踪 Span
 - 🔐 **认证授权**: JWT 和签名验证
-- 🔄 **限流控制**: 请求频率限制
+- 🚦 **限流控制**: 请求频率限制（基于令牌桶）
 - 🔒 **安全 Headers**: 安全响应头设置
 - 🔧 **请求 ID**: 请求唯一标识追踪
 - 📊 **指标采集**: 请求指标自动采集
@@ -142,27 +142,64 @@ engine.Use(middleware.Tracing())        // 7. 链路追踪
 
 ### 1. 限流中间件
 
+基于令牌桶算法的请求速率限制，防止暴力破解和 DoS 攻击。
+
 ```go
-import "golang.org/x/time/rate"
+// 初始化限流器
+middleware.InitRateLimiter(cfg.RateLimit)
 
-func RateLimitMiddleware(requestsPerSecond float64, burst int) gin.HandlerFunc {
-    limiter := rate.NewLimiter(rate.Limit(requestsPerSecond), burst)
+// 使用限流中间件
+engine.Use(middleware.RateLimit())
+```
 
+**配置**:
+```yaml
+rate_limit:
+  enabled: true
+  requests_per_second: 100  # 每秒允许的请求数
+  burst: 200                # 允许的突发请求数
+  exclude_paths:            # 排除限流的路径
+    - "/health"
+    - "/ready"
+    - "/metrics"
+```
+
+**限流策略**:
+- 基于客户端 IP、API Key 或用户 ID
+- 使用令牌桶算法，支持突发流量
+- 自动清理过期的限流器
+
+**响应示例**:
+```json
+{
+  "code": -1,
+  "message": "Too many requests, please try again later"
+}
+```
+
+**限流逻辑**:
+```go
+func RateLimit() gin.HandlerFunc {
     return func(c *gin.Context) {
+        // 获取客户端标识
+        key := getClientKey(c)
+        
+        // 获取令牌桶
+        limiter := rateLimiter.getLimiter(key)
+        
+        // 检查是否允许请求
         if !limiter.Allow() {
             c.JSON(429, gin.H{
-                "code":    -1,
+                "code": -1,
                 "message": "Too many requests",
             })
             c.Abort()
             return
         }
+        
         c.Next()
     }
 }
-
-// 使用
-engine.Use(RateLimitMiddleware(100, 200))
 ```
 
 ### 2. 权限检查中间件

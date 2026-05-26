@@ -1,4 +1,4 @@
-﻿package config
+package config
 
 import (
 	"fmt"
@@ -26,6 +26,7 @@ type Config struct {
 	Nacos              NacosConfig
 	CircuitBreaker     CircuitBreakerConfig
 	Auth               AuthConfig
+	RateLimit          RateLimitConfig
 }
 
 type AppConfig struct {
@@ -126,6 +127,13 @@ type CircuitBreakerConfig struct {
 	DefaultMaxConcurrent   int     `mapstructure:"default_max_concurrent"`
 	DefaultErrorPercentage int     `mapstructure:"default_error_percentage"`
 	DefaultRequestVolume   int     `mapstructure:"default_request_volume"`
+}
+
+type RateLimitConfig struct {
+	Enabled           bool     `mapstructure:"enabled"`
+	RequestsPerSecond float64  `mapstructure:"requests_per_second"`
+	Burst             int
+	ExcludePaths      []string `mapstructure:"exclude_paths"`
 }
 
 type AuthConfig struct {
