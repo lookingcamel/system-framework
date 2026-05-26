@@ -1,9 +1,10 @@
-﻿package circuitbreaker
+package circuitbreaker
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/afex/hystrix-go/hystrix"
@@ -22,9 +23,22 @@ type CircuitBreakerConfig struct {
 	DefaultRequestVolume   int     `mapstructure:"default_request_volume"`
 }
 
+var (
+	initialized bool
+	mu      sync.Mutex
+)
+
 func Init(cfg config.CircuitBreakerConfig) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	if !cfg.Enabled {
 		logger.Log.Info("Circuit breaker is disabled")
+		return
+	}
+
+	if initialized {
+		logger.Log.Debug("Circuit breaker already initialized, skipping")
 		return
 	}
 
@@ -46,6 +60,8 @@ func Init(cfg config.CircuitBreakerConfig) {
 		http.Handle("/hystrix.stream", hystrixStreamHandler)
 		logger.Log.Info("Hystrix stream handler started on /hystrix.stream")
 	}()
+
+	initialized = true
 }
 
 func Execute(commandName string, run func() error, fallback func(error) error) error {
