@@ -29,6 +29,8 @@
 - 🔍 **分布式追踪**: OpenTelemetry + OTLP 支持
 - 🛡️ **熔断降级**: 基于 Hystrix-go 的熔断器保护
 - 🚦 **速率限制**: 基于令牌桶的请求限流，防止暴力破解
+- 📦 **请求体大小限制**: 可配置的请求体大小限制，防止内存耗尽攻击
+- 🔢 **API 版本控制**: URL 路径版本控制，支持多版本共存和弃用通知
 - 🔐 **安全认证**: JWT + 请求签名验证
 - 🗄️ **数据库迁移**: golang-migrate 支持版本化迁移
 - 💾 **自动备份**: 数据库定时备份和恢复
@@ -38,7 +40,7 @@
 - 📝 **结构化日志**: Zap 日志系统，支持 JSON 格式
 - 🏥 **健康检查**: 就绪探针和存活探针
 - 🎨 **优雅关闭**: 支持零停机部署
-- 🔧 **性能分析**: pprof 性能分析工具
+- 🔧 **性能分析**: pprof 性能分析工具（生产环境自动禁用）
 
 ## 🚀 快速开始
 
@@ -112,7 +114,8 @@ system-framework/
 │   ├── migrate/                 # 数据库迁移
 │   ├── redis/                   # Redis 缓存
 │   ├── server/                  # HTTP 服务器
-│   └── tracing/                 # 链路追踪
+│   ├── tracing/                 # 链路追踪
+│   └── versioning/              # API 版本控制
 ├── pkg/                         # 公共工具包
 │   └── utils/                   # 工具函数
 ├── migrations/                  # 数据库迁移文件
@@ -193,6 +196,18 @@ Prometheus 指标采集和暴露。
 
 详细文档: [internal/backup/README.md](internal/backup/README.md)
 
+### API 版本控制 (versioning)
+
+URL 路径版本控制，支持多版本 API 共存、弃用通知和版本协商。
+
+特性:
+- 路径版本: `/api/v1/...`, `/api/v2/...`
+- 自动版本协商: 不带版本的请求使用默认版本
+- 弃用警告: 旧版本返回 `X-API-Deprecation-Notice` 响应头
+- 动态路由注册: 配置驱动的版本管理
+
+详细文档: [internal/versioning/README.md](internal/versioning/README.md)
+
 ## 🚢 部署指南
 
 ### Docker 部署
@@ -272,6 +287,12 @@ app:
   port: 8080
   mode: "release"
 
+server:
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 120
+  max_body_size: 8388608  # 8MB 请求体大小限制
+
 logging:
   level: "info"
   format: "json"
@@ -313,6 +334,23 @@ circuit_breaker:
   default_max_concurrent: 100
   default_error_percentage: 50
 
+rate_limit:
+  enabled: true
+  requests_per_second: 100
+  burst: 200
+  exclude_paths:
+    - "/health"
+    - "/ready"
+    - "/metrics"
+
+api_version:
+  enabled: true
+  default_version: "v1"
+  supported_versions:
+    - "v1"
+    - "v2"
+  deprecation_notice: "API v1 will be deprecated on 2026-12-31. Please migrate to v2."
+
 tracing:
   enabled: true
   service_name: "system-framework"
@@ -324,6 +362,20 @@ tracing:
 详细配置文档: [internal/config/README.md](internal/config/README.md)
 
 ## 📚 API 文档
+
+### API 版本控制
+
+项目支持多版本 API 共存，使用 URL 路径版本控制：
+
+- **默认版本**: v1（无需在路径中指定）
+- **支持的版本**: v1, v2
+- **请求格式**: `/api/{version}/endpoint`
+
+```
+GET /api/v1/example/:id      # v1 版本 API
+GET /api/v2/example/:id      # v2 版本 API（改进的响应格式）
+GET /api/example/:id         # 自动使用默认版本 v1
+```
 
 ### 健康检查
 
@@ -344,11 +396,18 @@ GET /metrics             # Prometheus 指标端点
 GET /circuit/status      # 熔断器状态查询
 ```
 
-### 示例 API
+### 示例 API - v1 版本
 
 ```
-GET /api/v1/example/:id      # 获取单个示例
-GET /api/v1/examples         # 列出所有示例
+GET /api/v1/example/:id      # 获取单个示例 (v1)
+GET /api/v1/examples         # 列出所有示例 (v1)
+```
+
+### 示例 API - v2 版本
+
+```
+GET /api/v2/example/:id      # 获取单个示例 (v2)
+GET /api/v2/examples         # 列出所有示例 (v2)
 ```
 
 详细 API 文档: [internal/handler/README.md](internal/handler/README.md)
@@ -389,17 +448,28 @@ GET /api/v1/examples         # 列出所有示例
 - **请求签名**: HMAC-SHA256 签名验证
 - **RBAC 权限控制**: 角色基础访问控制
 
+### 请求安全
+
+- **速率限制**: 基于令牌桶的请求限流，防止暴力破解和 DDoS 攻击
+- **请求体大小限制**: 可配置的请求体大小限制（默认 8MB），防止内存耗尽攻击
+- **Content-Length 检查**: 在读取请求体前预先检查大小
+
 ### 数据安全
 
 - **敏感信息加密**: 配置文件加密存储
 - **安全 Headers**: CORS、Security Headers
 - **输入验证**: 请求参数自动校验
 
+### 生产环境安全
+
+- **pprof 自动禁用**: 在生产模式（release）下自动禁用 pprof 性能分析工具，防止敏感信息泄露
+- **生产模式检测**: 基于 `app.mode` 配置自动判断环境并应用安全策略
+
 ## ⚡ 性能优化
 
 ### pprof 性能分析
 
-内置 pprof 支持：
+内置 pprof 支持（仅在非生产环境可用）：
 
 ```bash
 # CPU 分析
@@ -411,6 +481,8 @@ go tool pprof http://localhost:8080/debug/pprof/heap
 # Goroutine 分析
 go tool pprof http://localhost:8080/debug/pprof/goroutine
 ```
+
+⚠️ **注意**: 在生产模式（`app.mode = "release"`）下，pprof 会自动禁用，以确保生产环境的安全性。
 
 ### 性能优化建议
 
