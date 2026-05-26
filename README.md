@@ -1,6 +1,6 @@
 ﻿# System Framework
 
-基于 Go + Gin 的现代化云原生微服务框架
+基于 Go + Gin 的现代化云原生微服务框架。
 
 ## 📋 目录
 
